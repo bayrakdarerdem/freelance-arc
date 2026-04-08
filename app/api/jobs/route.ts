@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { initiateDeveloperControlledWalletsClient } from "@circle-fin/developer-controlled-wallets";
-import { createPublicClient, http, decodeEventLog } from "viem";
+import { createPublicClient, http } from "viem";
 import { arcTestnet } from "viem/chains";
 import { createClient } from "@supabase/supabase-js";
 
@@ -22,18 +22,6 @@ const supabase = createClient(
 const AGENTIC_COMMERCE = "0x0747EEf0706327138c69792bF28Cd525089e4583";
 const USDC = "0x3600000000000000000000000000000000000000";
 
-const ABI = [
-  { name: "createJob", type: "function", stateMutability: "nonpayable",
-    inputs: [{ name: "provider", type: "address" }, { name: "evaluator", type: "address" }, { name: "expiredAt", type: "uint256" }, { name: "description", type: "string" }, { name: "hook", type: "address" }],
-    outputs: [] },
-  { name: "setBudget", type: "function", stateMutability: "nonpayable",
-    inputs: [{ name: "jobId", type: "uint256" }, { name: "amount", type: "uint256" }, { name: "optParams", type: "bytes" }], outputs: [] },
-  { name: "fund", type: "function", stateMutability: "nonpayable",
-    inputs: [{ name: "jobId", type: "uint256" }, { name: "optParams", type: "bytes" }], outputs: [] },
-  { name: "JobCreated", type: "event", anonymous: false,
-    inputs: [{ indexed: true, name: "jobId", type: "uint256" }, { indexed: true, name: "client", type: "address" }, { indexed: true, name: "provider", type: "address" }, { indexed: false, name: "evaluator", type: "address" }, { indexed: false, name: "expiredAt", type: "uint256" }, { indexed: false, name: "hook", type: "address" }] },
-] as const;
-
 async function waitForTx(txId: string): Promise<string> {
   for (let i = 0; i < 40; i++) {
     await new Promise(r => setTimeout(r, 2000));
@@ -44,6 +32,19 @@ async function waitForTx(txId: string): Promise<string> {
   throw new Error("Transaction timeout");
 }
 
+async function getJobIdFromHash(txHash: string): Promise<string> {
+  const receipt = await publicClient.getTransactionReceipt({ hash: txHash as `0x${string}` });
+  for (const log of receipt.logs) {
+    if (log.topics && log.topics.length >= 2) {
+      const jobIdHex = log.topics[1];
+      if (jobIdHex) {
+        return BigInt(jobIdHex).toString();
+      }
+    }
+  }
+  return "0";
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { title, description, budget, duration, skills } = await req.json();
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
     const freelancerAddress = process.env.FREELANCER_WALLET_ADDRESS!;
     const budgetInUnits = (Number(budget) * 1_000_000).toString();
     const block = await publicClient.getBlock();
-    const expiredAt = (block.timestamp + 3600n).toString();
+    const expiredAt = (block.timestamp + BigInt(3600)).toString();
 
     const createTx = await circle.createContractExecutionTransaction({
       walletAddress: clientAddress, blockchain: "ARC-TESTNET",
@@ -61,21 +62,13 @@ export async function POST(req: NextRequest) {
       fee: { type: "level", config: { feeLevel: "MEDIUM" } },
     });
     const createHash = await waitForTx(createTx.data!.id!);
-
-    const receipt = await publicClient.getTransactionReceipt({ hash: createHash as `0x${string}` });
-    let jobId = 0n;
-    for (const log of receipt.logs) {
-      try {
-        const decoded = decodeEventLog({ abi: ABI, data: log.data, topics: log.topics });
-        if (decoded.eventName === "JobCreated") { jobId = decoded.args.jobId; break; }
-      } catch { continue; }
-    }
+    const jobId = await getJobIdFromHash(createHash);
 
     const budgetTx = await circle.createContractExecutionTransaction({
       walletAddress: freelancerAddress, blockchain: "ARC-TESTNET",
       contractAddress: AGENTIC_COMMERCE,
       abiFunctionSignature: "setBudget(uint256,uint256,bytes)",
-      abiParameters: [jobId.toString(), budgetInUnits, "0x"],
+      abiParameters: [jobId, budgetInUnits, "0x"],
       fee: { type: "level", config: { feeLevel: "MEDIUM" } },
     });
     await waitForTx(budgetTx.data!.id!);
@@ -93,25 +86,18 @@ export async function POST(req: NextRequest) {
       walletAddress: clientAddress, blockchain: "ARC-TESTNET",
       contractAddress: AGENTIC_COMMERCE,
       abiFunctionSignature: "fund(uint256,bytes)",
-      abiParameters: [jobId.toString(), "0x"],
+      abiParameters: [jobId, "0x"],
       fee: { type: "level", config: { feeLevel: "MEDIUM" } },
     });
     await waitForTx(fundTx.data!.id!);
 
     await supabase.from("jobs").insert({
-      title,
-      description,
-      budget: Number(budget),
-      duration,
-      skills,
-      status: "open",
-      job_id_onchain: jobId.toString(),
-      tx_hash: createHash,
+      title, description, budget: Number(budget), duration, skills,
+      status: "open", job_id_onchain: jobId, tx_hash: createHash,
     });
 
     return NextResponse.json({
-      success: true,
-      jobId: jobId.toString(),
+      success: true, jobId,
       txHash: createHash,
       explorer: `https://testnet.arcscan.app/tx/${createHash}`,
     });
@@ -123,10 +109,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   const { data, error } = await supabase
-    .from("jobs")
-    .select("*")
-    .order("created_at", { ascending: false });
-
+    .from("jobs").select("*").order("created_at", { ascending: false });
   if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   return NextResponse.json({ success: true, jobs: data });
 }
