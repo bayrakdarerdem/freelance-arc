@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FreelanceArc
 
-## Getting Started
+A decentralized freelance marketplace built on Arc Network. Every job is a smart contract. Every payment is secured by USDC escrow. No middleman.
 
-First, run the development server:
+Live Demo: https://freelance-arc.vercel.app
+GitHub: https://github.com/bayrakdarerdem/freelance-arc
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## What is FreelanceArc?
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+FreelanceArc is the on-chain alternative to platforms like Upwork or Fiverr. Instead of trusting a centralized company to hold and release payments, every job is governed by a smart contract on Arc Testnet.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+How it works:
+1. Client posts a job - createJob() is called on-chain
+2. USDC is locked into escrow - fund() secures the payment
+3. Freelancer delivers the work - submit() records proof on-chain
+4. Evaluator approves - complete() automatically releases USDC to the freelancer
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Arc Network Features Used
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+ERC-8183 - Agentic Commerce
+Every job is a fully on-chain agreement with a lifecycle:
+Open - Funded - Submitted - Completed
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Circle Developer Controlled Wallets
+Wallets are managed via Circle's API. No private key handling required.
 
-## Deploy on Vercel
+USDC Escrow
+Every job posting locks USDC in escrow. Payment is automatic upon approval.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Arc Testnet
+All transactions are verifiable on https://testnet.arcscan.app
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Tech Stack
+
+Frontend: Next.js + Tailwind CSS
+Backend: Circle Developer Controlled Wallets SDK + viem
+Database: Supabase
+Blockchain: Arc Testnet (EVM-compatible)
+Deployment: Vercel
+
+---
+
+## Key Contract Addresses (Arc Testnet)
+
+ERC-8183 AgenticCommerce: 0x0747EEf0706327138c69792bF28Cd525089e4583
+USDC: 0x3600000000000000000000000000000000000000
+
+---
+
+## Features
+
+- Post a job - triggers a real ERC-8183 on-chain job lifecycle
+- USDC locked in escrow on every job posting
+- Job listings pulled from real database and on-chain data
+- Job detail pages with live blockchain status
+- Full deployment on Vercel
+
+---
+
+## Links
+
+- Arc Docs: https://docs.arc.network
+- Circle Developer Console: https://console.circle.com
+- Circle Testnet Faucet: https://faucet.circle.com
+- Arc Testnet Explorer: https://testnet.arcscan.app
+- ERC-8183 Tutorial: https://docs.arc.network/arc/tutorials/create-your-first-erc-8183-job
