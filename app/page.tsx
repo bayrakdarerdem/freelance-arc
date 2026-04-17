@@ -22,7 +22,7 @@ export default function Home() {
     fetch("/api/jobs")
       .then(r => r.json())
       .then(data => {
-        if (data.success) setJobs(data.jobs);
+        if (data.success) setJobs(data.jobs.filter((j: any) => j.status !== "completed"));
         setLoading(false);
       });
   }, []);
