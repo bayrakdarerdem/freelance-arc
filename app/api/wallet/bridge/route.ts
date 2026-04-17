@@ -14,12 +14,22 @@ export async function POST(req: NextRequest) {
     const kit = new AppKit();
 
     const result = await kit.bridge({
-      from: { adapter, chain: "Ethereum_Sepolia", address: process.env.CLIENT_WALLET_ADDRESS as `0x${string}` },
-      to: { adapter, chain: "Arc_Testnet", address: process.env.CLIENT_WALLET_ADDRESS as `0x${string}` },
+      from: { 
+        adapter, 
+        chain: "Ethereum_Sepolia",
+        address: process.env.CLIENT_WALLET_ADDRESS as `0x${string}`,
+        rpcUrl: "https://ethereum-sepolia-rpc.publicnode.com",
+      },
+      to: { 
+        adapter, 
+        chain: "Arc_Testnet",
+        address: process.env.CLIENT_WALLET_ADDRESS as `0x${string}`,
+        rpcUrl: "https://rpc.arc.dev",
+      },
       amount: amount || "1.00",
     });
 
-    return NextResponse.json({ success: true, message: "Bridge initiated successfully", result });
+    return NextResponse.json({ success: true, message: "Bridge initiated", result });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

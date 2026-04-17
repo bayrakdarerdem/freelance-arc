@@ -49,6 +49,7 @@ export default function Home() {
           Freelance<span className="text-emerald-600">Arc</span>
         </span>
         <div className="flex gap-3 items-center">
+            <a href="/faucet" className="text-sm text-gray-500 hover:text-gray-900">Faucet</a>
            <a href="/wallet" className="text-sm text-gray-500 hover:text-gray-900">Wallet</a>
           <a href="/agent-demo" className="text-sm text-gray-500 hover:text-gray-900">Agent Demo</a>
           <a href="/dashboard" className="text-sm text-gray-500 hover:text-gray-900">Dashboard</a>
