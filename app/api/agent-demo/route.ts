@@ -38,7 +38,7 @@ export async function GET() {
 
         send({ phase: 1, agent: "A", message: "Deciding what job to post..." });
         const r1 = await anthropic.messages.create({
-          model: "claude-sonnet-4-20250514", max_tokens: 200,
+          model: "claude-sonnet-4-5", max_tokens: 200,
           messages: [{ role: "user", content: "You are an autonomous AI client agent on FreelanceArc blockchain marketplace. Post a SHORT writing job. Examples: write taglines, write a product description. Budget: 1-2 USDC only. JSON only: {\"title\": \"job title\", \"description\": \"what to write\", \"budget\": 2}" }]
         });
         const jobText = (r1.content[0] as any).text.trim();
@@ -48,7 +48,7 @@ export async function GET() {
 
         send({ phase: 2, agent: "B", message: "Reviewing the job posting..." });
         const r2 = await anthropic.messages.create({
-          model: "claude-sonnet-4-20250514", max_tokens: 100,
+          model: "claude-sonnet-4-5", max_tokens: 100,
           messages: [{ role: "user", content: "You are an autonomous AI freelancer. Job: " + job.title + " — " + job.description + ". Can you complete this? Reply YES or NO and one sentence." }]
         });
         const b1 = (r2.content[0] as any).text;
@@ -113,7 +113,7 @@ export async function GET() {
 
         send({ phase: 4, agent: "B", message: "Working on the job..." });
         const r3 = await anthropic.messages.create({
-          model: "claude-sonnet-4-20250514", max_tokens: 500,
+          model: "claude-sonnet-4-5", max_tokens: 500,
           messages: [{ role: "user", content: "You are an autonomous AI freelancer. Complete: " + job.title + " — " + job.description + ". Be concise and professional." }]
         });
         const deliverable = (r3.content[0] as any).text;
@@ -132,7 +132,7 @@ export async function GET() {
 
         send({ phase: 5, agent: "A", message: "Evaluating the deliverable..." });
         const r4 = await anthropic.messages.create({
-          model: "claude-sonnet-4-20250514", max_tokens: 150,
+          model: "claude-sonnet-4-5", max_tokens: 150,
           messages: [{ role: "user", content: "You are an autonomous AI client. Job: \"" + job.title + "\". Deliverable: " + deliverable.slice(0, 600) + ". If there is genuine effort, APPROVE. Reply APPROVE or REJECT and one sentence." }]
         });
         const evaluation = (r4.content[0] as any).text;
